@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Test Antiphishing — JSM</title>
+<meta name="description" content="Test interactiu d'entrenament antiphishing. 10 casos reals i simulats per aprendre a detectar atacs d'enginyeria social.">
+<style>
+  :root{
+    --bg:#F8FAFC;
+    --surface:#FFFFFF;
+    --ink:#0F172A;
+    --ink-soft:#475569;
+    --line:#E2E8F0;
+    --brand:#0F172A;
+    --accent:#3B82F6;
+    --ok:#10B981;
+    --ok-soft:#D1FAE5;
+    --bad:#EF4444;
+    --bad-soft:#FEE2E2;
+    --warn:#F59E0B;
+    --radius:14px;
+    --shadow:0 2px 12px rgba(15,23,42,.06);
+    --shadow-md:0 8px 24px rgba(15,23,42,.08);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    background:var(--bg);
+    color:var(--ink);
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+  .wrap{
+    max-width:720px;
+    margin:0 auto;
+    padding:32px 20px 80px;
+  }
+  header.top{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:28px;
+    padding-bottom:20px;
+    border-bottom:1px solid var(--line);
+  }
+  .logo{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font-weight:700;
+    font-size:15px;
+    letter-spacing:-.01em;
+  }
+  .logo-mark{
+    width:28px;height:28px;border-radius:8px;
+    background:var(--brand);color:#fff;
+    display:grid;place-items:center;
+    font-size:14px;
+  }
+  .meta{
+    font-size:13px;color:var(--ink-soft);
+  }
+
+  /* Screens */
+  .screen{display:none}
+  .screen.active{display:block;animation:fade .25s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+  /* Intro */
+  .intro h1{
+    font-size:34px;line-height:1.15;letter-spacing:-.02em;
+    margin:12px 0 10px;font-weight:800;
+  }
+  .intro .lede{
+    font-size:16px;color:var(--ink-soft);margin:0 0 28px;
+  }
+  .card{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:22px;
+    box-shadow:var(--shadow);
+  }
+  .card + .card{margin-top:14px}
+  .card h3{
+    margin:0 0 8px;font-size:15px;font-weight:700;
+  }
+  .card p{margin:0;color:var(--ink-soft);font-size:14px}
+  .grid-info{
+    display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin:24px 0 32px;
+  }
+  @media(max-width:520px){.grid-info{grid-template-columns:1fr}}
+
+  /* Buttons */
+  .btn{
+    appearance:none;border:0;cursor:pointer;
+    font:inherit;font-weight:600;font-size:15px;
+    padding:14px 22px;border-radius:12px;
+    transition:transform .08s ease, background .15s ease, box-shadow .15s ease;
+  }
+  .btn:active{transform:scale(.98)}
+  .btn-primary{
+    background:var(--brand);color:#fff;
+  }
+  .btn-primary:hover{background:#1E293B}
+  .btn-ghost{
+    background:transparent;color:var(--ink);border:1px solid var(--line);
+  }
+  .btn-ghost:hover{background:var(--bg)}
+  .btn-lg{padding:16px 28px;font-size:16px}
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap}
+
+  /* Progress */
+  .progress-wrap{
+    display:flex;align-items:center;gap:12px;margin-bottom:18px;
+  }
+  .progress-label{font-size:13px;color:var(--ink-soft);font-weight:500;white-space:nowrap}
+  .progress-bar{
+    flex:1;height:6px;background:var(--line);border-radius:999px;overflow:hidden;
+  }
+  .progress-fill{
+    height:100%;background:var(--brand);transition:width .3s ease;width:0;
+  }
+
+  /* Question */
+  .q-channel{
+    display:inline-flex;align-items:center;gap:6px;
+    font-size:12px;font-weight:600;color:var(--ink-soft);
+    text-transform:uppercase;letter-spacing:.06em;
+    padding:6px 10px;border:1px solid var(--line);border-radius:999px;background:var(--surface);
+    margin-bottom:14px;
+  }
+  .q-title{
+    font-size:19px;font-weight:700;margin:0 0 16px;letter-spacing:-.01em;line-height:1.3;
+  }
+
+  /* Mockups */
+  .mockup{
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    overflow:hidden;
+    margin-bottom:20px;
+    box-shadow:var(--shadow);
+  }
+
+  /* Email mockup */
+  .mk-email .mk-head{
+    padding:14px 18px;border-bottom:1px solid var(--line);background:#FAFBFC;
+  }
+  .mk-email .mk-row{font-size:13px;margin:3px 0;color:var(--ink)}
+  .mk-email .mk-row strong{color:var(--ink-soft);font-weight:600;display:inline-block;min-width:68px}
+  .mk-email .mk-subject{font-size:15px;font-weight:700;margin-top:6px;color:var(--ink)}
+  .mk-email .mk-body{padding:18px;font-size:14px;color:var(--ink)}
+  .mk-email .mk-body p{margin:0 0 10px}
+  .mk-btn{
+    display:inline-block;background:#FFCC00;color:#000;padding:12px 22px;
+    border-radius:6px;font-weight:700;font-size:14px;text-decoration:none;margin:10px 0;
+  }
+  .mk-btn.dhl{background:#FFCC00;color:#000}
+  .mk-btn.amz{background:#FF9900;color:#000}
+  .mk-btn.google{background:#1A73E8;color:#fff}
+  .mk-btn.booking{background:#003580;color:#fff}
+
+  /* SMS mockup (iPhone style) */
+  .mk-sms .mk-head{
+    padding:10px 14px;background:#F2F2F7;border-bottom:1px solid #D1D1D6;
+    font-size:12px;font-weight:600;color:#000;text-align:center;
+  }
+  .mk-sms .mk-body{padding:18px 14px;background:#fff;min-height:100px}
+  .mk-sms .bubble{
+    background:#E5E5EA;color:#000;padding:10px 14px;border-radius:18px;
+    max-width:85%;font-size:14px;line-height:1.4;
+  }
+  .mk-sms .time{
+    font-size:11px;color:#8E8E93;text-align:center;margin-bottom:8px;
+  }
+  .mk-sms a{color:#007AFF;text-decoration:underline}
+
+  /* WhatsApp mockup */
+  .mk-wa{background:#ECE5DD}
+  .mk-wa .mk-head{
+    background:#128C7E;color:#fff;padding:10px 14px;display:flex;align-items:center;gap:10px;
+  }
+  .mk-wa .avatar{
+    width:34px;height:34px;border-radius:50%;background:#fff;display:grid;place-items:center;
+    font-weight:700;color:#128C7E;font-size:13px;
+  }
+  .mk-wa .name{font-weight:600;font-size:14px}
+  .mk-wa .sub{font-size:11px;opacity:.85}
+  .mk-wa .mk-body{padding:14px;min-height:100px}
+  .mk-wa .bubble{
+    background:#fff;padding:8px 10px 18px;border-radius:8px;max-width:85%;
+    font-size:13.5px;position:relative;box-shadow:0 1px 1px rgba(0,0,0,.08);
+  }
+  .mk-wa .bubble .ts{position:absolute;bottom:3px;right:8px;font-size:10px;color:#999}
+
+  /* Instagram DM */
+  .mk-ig .mk-head{
+    padding:12px 14px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;background:#fff;
+  }
+  .mk-ig .avatar{
+    width:34px;height:34px;border-radius:50%;
+    background:linear-gradient(45deg,#F58529,#DD2A7B,#8134AF,#515BD4);
+    display:grid;place-items:center;color:#fff;font-weight:700;font-size:12px;
+  }
+  .mk-ig .handle{font-weight:600;font-size:14px}
+  .mk-ig .verified{color:#3897F0;font-size:12px;margin-left:3px}
+  .mk-ig .mk-body{padding:16px;min-height:100px;background:#fff}
+  .mk-ig .bubble{
+    background:#EFEFEF;color:#000;padding:10px 14px;border-radius:18px;
+    max-width:85%;font-size:14px;
+  }
+  .mk-ig a{color:#3897F0}
+
+  /* QR mockup */
+  .mk-qr{text-align:center;padding:22px}
+  .mk-qr .ctx{font-size:13px;color:var(--ink-soft);margin-bottom:14px}
+  .mk-qr .qr-box{
+    display:inline-block;padding:16px;background:#fff;border:2px solid var(--ink);border-radius:8px;
+    position:relative;
+  }
+  .mk-qr .sticker{
+    position:absolute;top:-10px;right:-10px;background:var(--warn);color:#000;
+    font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;
+  }
+  .mk-qr svg{display:block}
+  .mk-qr .hint{font-size:12px;color:var(--ink-soft);margin-top:12px;font-style:italic}
+
+  /* Facebook post */
+  .mk-fb .mk-head{
+    padding:12px 14px;display:flex;align-items:center;gap:10px;
+  }
+  .mk-fb .avatar{
+    width:40px;height:40px;border-radius:50%;background:#1877F2;color:#fff;
+    display:grid;place-items:center;font-weight:700;font-size:16px;
+  }
+  .mk-fb .name{font-weight:600;font-size:14px}
+  .mk-fb .sub{font-size:12px;color:var(--ink-soft)}
+  .mk-fb .text{padding:0 14px 12px;font-size:14px}
+  .mk-fb .linkcard{
+    background:#F0F2F5;padding:12px 14px;border-top:1px solid var(--line);
+  }
+  .mk-fb .linkcard .dom{font-size:12px;color:var(--ink-soft);text-transform:uppercase}
+  .mk-fb .linkcard .ttl{font-weight:600;font-size:14px;margin:2px 0}
+  .mk-fb .linkcard .desc{font-size:13px;color:var(--ink-soft)}
+
+  /* Newsletter / branded email */
+  .mk-nl .brand-bar{padding:14px;text-align:center;font-weight:800;font-size:18px;color:#fff}
+  .mk-nl .brand-amazon{background:#131A22;color:#FF9900}
+  .mk-nl .banner{
+    padding:22px 18px;text-align:center;background:linear-gradient(135deg,#232F3E,#131A22);color:#fff;
+  }
+  .mk-nl .banner h2{margin:0 0 6px;font-size:22px;letter-spacing:-.01em}
+  .mk-nl .banner p{margin:0;font-size:13px;opacity:.9}
+
+  /* Choice buttons */
+  .choices{
+    display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px;
+  }
+  .choice{
+    appearance:none;border:1.5px solid var(--line);background:var(--surface);
+    padding:16px 14px;border-radius:12px;font:inherit;font-weight:600;font-size:15px;
+    cursor:pointer;transition:all .15s ease;color:var(--ink);
+    display:flex;align-items:center;justify-content:center;gap:8px;
+  }
+  .choice:hover:not(:disabled){border-color:var(--ink);transform:translateY(-1px)}
+  .choice:disabled{cursor:default;opacity:.65}
+  .choice.correct{background:var(--ok-soft);border-color:var(--ok);color:#065F46;opacity:1}
+  .choice.wrong{background:var(--bad-soft);border-color:var(--bad);color:#991B1B;opacity:1}
+  .choice .dot{
+    width:10px;height:10px;border-radius:50%;background:currentColor;opacity:.6;
+  }
+
+  /* Feedback */
+  .feedback{
+    margin-top:18px;padding:16px 18px;border-radius:12px;border:1px solid var(--line);
+    background:var(--surface);display:none;
+  }
+  .feedback.show{display:block;animation:fade .2s ease}
+  .feedback.ok{background:var(--ok-soft);border-color:var(--ok)}
+  .feedback.bad{background:var(--bad-soft);border-color:var(--bad)}
+  .feedback .fb-label{
+    font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;margin-bottom:6px;
+  }
+  .feedback.ok .fb-label{color:#065F46}
+  .feedback.bad .fb-label{color:#991B1B}
+  .feedback .fb-text{font-size:14px;color:var(--ink);line-height:1.5}
+  .feedback .fb-text strong{color:var(--ink)}
+
+  .next-row{margin-top:20px;text-align:right;display:none}
+  .next-row.show{display:block}
+
+  /* Result */
+  .result{text-align:center}
+  .score-ring{
+    width:160px;height:160px;border-radius:50%;margin:20px auto 16px;
+    display:grid;place-items:center;
+    background:conic-gradient(var(--ok) calc(var(--pct)*1%), var(--line) 0);
+    position:relative;
+  }
+  .score-ring::before{
+    content:"";position:absolute;inset:14px;background:var(--bg);border-radius:50%;
+  }
+  .score-ring .score-val{
+    position:relative;font-size:38px;font-weight:800;letter-spacing:-.02em;
+  }
+  .score-ring .score-val small{font-size:16px;font-weight:600;color:var(--ink-soft);display:block;margin-top:2px}
+  .result h2{font-size:24px;margin:10px 0 6px;letter-spacing:-.01em}
+  .result .verdict{color:var(--ink-soft);margin:0 0 24px;font-size:15px}
+  .recap{
+    text-align:left;margin:24px 0;
+  }
+  .recap h3{font-size:15px;margin:0 0 10px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.05em;font-weight:600}
+  .recap-item{
+    display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);
+    font-size:14px;
+  }
+  .recap-item:last-child{border-bottom:0}
+  .recap-icon{
+    width:22px;height:22px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;
+    font-size:13px;font-weight:700;color:#fff;
+  }
+  .recap-icon.ok{background:var(--ok)}
+  .recap-icon.bad{background:var(--bad)}
+  .recap-text .t{font-weight:600;color:var(--ink)}
+  .recap-text .s{color:var(--ink-soft);font-size:13px;margin-top:2px}
+
+  footer{
+    margin-top:40px;padding-top:20px;border-top:1px solid var(--line);
+    text-align:center;font-size:12px;color:var(--ink-soft);
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="logo">
+      <div class="logo-mark">⚠</div>
+      <div>Test Antiphishing <span style="font-weight:500;color:var(--ink-soft)">· JSM</span></div>
+    </div>
+    <div class="meta">Mòdul 0378 · ITB</div>
+  </header>
+
+  <!-- ============== INTRO ============== -->
+  <section id="intro" class="screen intro active">
+    <h1>És phishing o és legítim?</h1>
+    <p class="lede">10 casos reals de correus, SMS, WhatsApp, codis QR i xarxes socials. Alguns són atacs d'enginyeria social. D'altres són comunicacions legítimes. Sabries distingir-los?</p>
+
+    <div class="grid-info">
+      <div class="card">
+        <h3>10 preguntes</h3>
+        <p>Cada cas et mostra una captura real del canal (email, SMS, WhatsApp, QR…).</p>
+      </div>
+      <div class="card">
+        <h3>Feedback immediat</h3>
+        <p>Després de cada resposta t'explico què delata l'atac o què fa segura la comunicació.</p>
+      </div>
+      <div class="card">
+        <h3>~5 minuts</h3>
+        <p>Ideal per a sessions breus de formació corporativa o autoentrenament.</p>
+      </div>
+      <div class="card">
+        <h3>Objectiu</h3>
+        <p>Aprendre a identificar els senyals de phishing abans de fer clic.</p>
+      </div>
+    </div>
+
+    <button class="btn btn-primary btn-lg" onclick="start()">Començar el test →</button>
+  </section>
+
+  <!-- ============== QUESTION ============== -->
+  <section id="quiz" class="screen">
+    <div class="progress-wrap">
+      <div class="progress-label" id="progLabel">Pregunta 1 de 10</div>
+      <div class="progress-bar"><div class="progress-fill" id="progFill"></div></div>
+    </div>
+    <div id="qContent"></div>
+  </section>
+
+  <!-- ============== RESULT ============== -->
+  <section id="result" class="screen result">
+    <div class="score-ring" id="scoreRing" style="--pct:0">
+      <div class="score-val"><span id="scoreNum">0</span><small>de 10</small></div>
+    </div>
+    <h2 id="scoreTitle">Resultat</h2>
+    <p class="verdict" id="scoreMsg"></p>
+    <div class="btn-row" style="justify-content:center">
+      <button class="btn btn-primary" onclick="restart()">Tornar a fer el test</button>
+    </div>
+    <div class="recap">
+      <h3>Repàs de totes les preguntes</h3>
+      <div id="recapList"></div>
+    </div>
+  </section>
+
+  <footer>
+    Test Antiphishing · Jheremy Sánchez Morillo (JSM) · 2026<br>
+    Mòdul 0378 Seguretat i alta disponibilitat — Institut Tecnològic de Barcelona
+  </footer>
+</div>
+
+<script>
+/* ===========================================================
+   DADES DEL TEST (10 casos, 6 phishings + 4 legítims)
+   =========================================================== */
+const QUESTIONS = [
+  {
+    channel:"Email",
+    icon:"✉️",
+    answer:"phishing",
+    mockup:`
+      <div class="mockup mk-email">
+        <div class="mk-head">
+          <div class="mk-row"><strong>De:</strong> DHL Express &lt;noreply@dhl-customs-es.com&gt;</div>
+          <div class="mk-row"><strong>Per a:</strong> jo@gmail.com</div>
+          <div class="mk-subject">[IMPORTANT] Paquet retingut a la duana — Tasses pendents</div>
+        </div>
+        <div class="mk-body">
+          <p>Benvolgut/da client,</p>
+          <p>Un paquet a nom teu procedent de la <strong>Xina</strong> es troba retingut a la duana de Madrid-Barajas.</p>
+          <p><strong>Núm. seguiment:</strong> DHL-9284-7715-ES<br>
+          <strong>IVA d'importació:</strong> 24,00 €<br>
+          <strong>Taxa de gestió:</strong> 4,90 €<br>
+          <strong>Total a pagar: 28,90 €</strong></p>
+          <p>Si no es paga en 72 h, el paquet es retornarà amb un cost addicional de 45 €.</p>
+          <a href="#" class="mk-btn dhl" onclick="return false">PAGAR TASSES I REBRE EL PAQUET</a>
+          <p style="color:#666;font-size:12px">DHL Express Spain, S.L.U.</p>
+        </div>
+      </div>`,
+    fbOk:"<strong>Correcte.</strong> És phishing. El domini del remitent <code>dhl-customs-es.com</code> no és el real de DHL (<code>dhl.com</code>). DHL mai cobra duanes per email: el repartidor porta el rebut físic. La urgència artificial (72 h) i el botó amb enllaç sospitós confirmen l'atac.",
+    fbBad:"<strong>Error.</strong> És phishing. Fixa't en el domini <code>dhl-customs-es.com</code> (no és el real de DHL). DHL mai cobra duanes per email — es paguen al repartidor. La pressió temporal (72 h + penalització) és un indicador clàssic d'enginyeria social.",
+    recapTitle:"Phishing DHL — tasses duaneres falses"
+  },
+
+  {
+    channel:"SMS",
+    icon:"📱",
+    answer:"phishing",
+    mockup:`
+      <div class="mockup mk-sms">
+        <div class="mk-head">+34 647 82 15 03</div>
+        <div class="mk-body">
+          <div class="time">Avui 10:24</div>
+          <div class="bubble">[BBVA] Hem detectat un accés sospitós al teu compte. Per seguretat, verifica la teva identitat ara: <a href="#" onclick="return false">https://bbva-seguretat.net/verificar</a></div>
+        </div>
+      </div>`,
+    fbOk:"<strong>Correcte.</strong> És smishing. El BBVA mai envia enllaços als SMS per verificar comptes. L'URL <code>bbva-seguretat.net</code> no és el domini oficial (<code>bbva.es</code>). El to urgent (\"ara\") busca una reacció immediata.",
+    fbBad:"<strong>Error.</strong> És smishing. El BBVA (i qualsevol banc seriós) <strong>mai</strong> envia enllaços per SMS. El domini <code>bbva-seguretat.net</code> no és l'oficial del banc. Davant qualsevol dubte, entra manualment al web o a l'app del banc.",
+    recapTitle:"Smishing BBVA — accés sospitós"
+  },
+
+  {
+    channel:"WhatsApp",
+    icon:"💬",
+    answer:"phishing",
+    mockup:`
+      <div class="mockup mk-wa">
+        <div class="mk-head">
+          <div class="avatar">?</div>
+          <div>
+            <div class="name">+34 611 48 92 17</div>
+            <div class="sub">en línia</div>
+          </div>
+        </div>
+        <div class="mk-body">
+          <div class="bubble">
+            Hola mama, sóc jo. He perdut el mòbil i t'escric des d'un número nou. El meu antic ja no funciona, guarda aquest contacte.
+            <br><br>
+            Tens un moment? Necessito que em facis un Bizum urgent, després et truco i t'ho explico.
+            <span class="ts">10:52 ✓✓</span>
+          </div>
+        </div>
+      </div>`,
+    fbOk:"<strong>Correcte.</strong> És phishing (modalitat <em>\"fill en apuros\"</em>). Un número desconegut que es fa passar per un familiar + petició urgent de diners = atac clàssic. Mai facis Bizum sense trucar primer al número original del suposat familiar.",
+    fbBad:"<strong>Error.</strong> És phishing. L'estafa del \"fill que ha perdut el mòbil\" està increïblement estesa. Sempre truca al número original de la persona per confirmar. Cap familiar de veritat et demanarà diners urgents sense parlar primer per telèfon.",
+    recapTitle:"Phishing WhatsApp — \"fill en apuros\""
+  },
+
+  {
+    channel:"Codi QR",
+    icon:"🔳",
+    answer:"phishing",
+    mockup:`
+      <div class="mockup mk-qr">
+        <div class="ctx">Codi QR al parquímetre del carrer Diputació (Barcelona) per pagar la zona blava.</div>
+        <div class="qr-box">
+          <div class="sticker">Enganxina enganxada</div>
+          <svg width="140" height="140" viewBox="0 0 29 29" xmlns="http://www.w3.org/2000/svg">
+            <rect width="29" height="29" fill="#fff"/>
+            <g fill="#000">
+              <rect x="0" y="0" width="7" height="7"/><rect x="1" y="1" width="5" height="5" fill="#fff"/><rect x="2" y="2" width="3" height="3"/>
+              <rect x="22" y="0" width="7" height="7"/><rect x="23" y="1" width="5" height="5" fill="#fff"/><rect x="24" y="2" width="3" height="3"/>
+              <rect x="0" y="22" width="7" height="7"/><rect x="1" y="23" width="5" height="5" fill="#fff"/><rect x="2" y="24" width="3" height="3"/>
+              <rect x="9" y="1" width="1" height="1"/><rect x="11" y="1" width="2" height="1"/><rect x="15" y="1" width="1" height="2"/><rect x="18" y="1" width="2" height="1"/>
+              <rect x="9" y="3" width="2" height="1"/><rect x="13" y="3" width="1" height="2"/><rect x="16" y="3" width="2" height="1"/><rect x="19" y="3" width="1" height="1"/>
+              <rect x="10" y="5" width="1" height="1"/><rect x="12" y="5" width="2" height="1"/><rect x="15" y="5" width="1" height="2"/><rect x="18" y="5" width="2" height="1"/>
+              <rect x="1" y="9" width="1" height="2"/><rect x="3" y="9" width="2" height="1"/><rect x="6" y="9" width="1" height="2"/>
+              <rect x="9" y="9" width="1" height="1"/><rect x="11" y="9" width="2" height="1"/><rect x="14" y="9" width="1" height="2"/><rect x="17" y="9" width="2" height="1"/><rect x="20" y="9" width="1" height="1"/>
+              <rect x="23" y="9" width="2" height="1"/><rect x="26" y="9" width="1" height="2"/>
+              <rect x="1" y="12" width="2" height="1"/><rect x="4" y="12" width="1" height="2"/><rect x="7" y="12" width="2" height="1"/>
+              <rect x="10" y="12" width="1" height="1"/><rect x="12" y="12" width="2" height="1"/><rect x="15" y="12" width="1" height="2"/><rect x="18" y="12" width="2" height="1"/>
+              <rect x="21" y="12" width="1" height="1"/><rect x="23" y="12" width="2" height="1"/><rect x="26" y="12" width="2" height="1"/>
+              <rect x="2" y="15" width="1" height="2"/><rect x="5" y="15" width="2" height="1"/><rect x="8" y="15" width="1" height="2"/>
+              <rect x="11" y="15" width="1" height="1"/><rect x="13" y="15" width="2" height="1"/><rect x="16" y="15" width="1" height="2"/><rect x="19" y="15" width="2" height="1"/>
+              <rect x="22" y="15" width="1" height="1"/><rect x="24" y="15" width="2" height="1"/><rect x="27" y="15" width="1" height="2"/>
+              <rect x="1" y="18" width="2" height="1"/><rect x="4" y="18" width="1" height="2"/><rect x="7" y="18" width="2" height="1"/>
+              <rect x="10" y="18" width="1" height="1"/><rect x="12" y="18" width="2" height="1"/><rect x="15" y="18" width="1" height="2"/><rect x="18" y="18" width="2" height="1"/>
+              <rect x="21" y="18" width="1" height="1"/><rect x="23" y="18" width="2" height="1"/><rect x="26" y="18" width="2" height="1"/>
+              <rect x="9" y="21" width="1" height="1"/><rect x="11" y="21" width="2" height="1"/><rect x="14" y="21" width="1" height="2"/><rect x="17" y="21" width="2" height="1"/><rect x="20" y="21" width="1" height="1"/>
+              <rect x="23" y="21" width="2" height="1"/><rect x="26" y="21" width="2" height="1"/>
+              <rect x="9" y="24" width="1" height="2"/><rect x="12" y="24" width="2" height="1"/><rect x="15" y="24" width="1" height="2"/><rect x="18" y="24" width="2" height="1"/>
+              <rect x="21" y="24" width="1" height="1"/><rect x="24" y="24" width="2" height="1"/><rect x="27" y="24" width="1" height="2"/>
+              <rect x="10" y="27" width="1" height="1"/><rect x="12" y="27" width="2" height="1"/><rect x="16" y="27" width="2" height="1"/><rect x="19" y="27" width="1" height="1"/>
+              <rect x="22" y="27" width="2" height="1"/><rect x="25" y="27" width="1" height="1"/><rect x="27" y="27" width="1" height="1"/>
+            </g>
+          </svg>
+        </div>
+        <div class="hint">S'observa que l'enganxina està col·locada sobre el QR original.</div>
+      </div>`,
+    fbOk:"<strong>Correcte.</strong> És QRishing. Els atacants enganxen QRs falsos sobre els reals en parquímetres, menús de restaurant i cartells públics. El QR fals redirigeix a una pàgina clonada que roba les dades de la targeta.",
+    fbBad:"<strong>Error.</strong> És QRishing. L'enganxina sobre el QR original delata l'atac. Davant qualsevol QR en espais públics, comprova si no hi ha un adhesiu sobre l'original i verifica la URL abans d'introduir dades.",
+    recapTitle:"QRishing — parquímetre amb QR fals"
+  },
+
+  {
+    channel:"Instagram DM",
+    icon:"📷",
+    answer:"phishing",
+    mockup:`
+      <div class="mockup mk-ig">
+        <div class="mk-head">
+          <div class="avatar">A</div>
+          <div>
+            <div class="handle">apple.rewards_es <span class="verified">✓</span></div>
+            <div style="font-size:11px;color:#8E8E8E">Actiu fa 2 min</div>
+          </div>
+        </div>
+        <div class="mk-body">
+          <div class="bubble">
+            🎉 Enhorabona! Has estat seleccionat al sorteig d'Apple España. Has guanyat un <strong>iPhone 16 Pro Max</strong> valorat en 1.469 €.
+            <br><br>
+            Reclama'l abans de 24 h aquí 👉 <a href="#" onclick="return false">bit.ly/apple-rewards-es</a>
+          </div>
+        </div>
+      </div>`,
+    fbOk:"<strong>Correcte.</strong> És phishing. Apple no fa sorteigs per DM d'Instagram. L'URL escurçada <code>bit.ly/…</code> amaga la destinació real. El símbol de \"verificat\" (✓) està falsificat amb un emoji, no és la verificació real d'Instagram.",
+    fbBad:"<strong>Error.</strong> És phishing. Els premis no sol·licitats d'una marca que no segueixes són sempre sospitosos. Les URLs escurçades (<code>bit.ly</code>, <code>tinyurl</code>) són una bandera vermella quan venen de contactes desconeguts.",
+    recapTitle:"Phishing Instagram — sorteig Apple fals"
+  },
+
+  {
+    channel:"Email",
+    icon:"✉️",
+    answer:"legitim",
+    mockup:`
+      <div class="mockup mk-email">
+        <div class="mk-head">
+          <div class="mk-row"><strong>De:</strong> Google &lt;no-reply@accounts.google.com&gt;</div>
+          <div class="mk-row"><strong>Per a:</strong> jheremy.jsm@gmail.com</div>
+          <div class="mk-subject">Alerta de seguretat</div>
+        </div>
+        <div class="mk-body">
+          <p>Hola Jheremy,</p>
+          <p>Hem detectat un nou inici de sessió al teu compte de Google.</p>
+          <p><strong>Dispositiu:</strong> Firefox a Linux<br>
+          <strong>Ubicació:</strong> Barcelona, Espanya<br>
+          <strong>Data:</strong> 24 de novembre, 18:42</p>
+          <p>Si has estat tu, no cal fer res més.</p>
+          <p>Si no reconeixes aquesta activitat, revisa l'activitat del teu compte a <strong>myaccount.google.com/security</strong>.</p>
+          <a href="#" class="mk-btn google" onclick="return false">Comprovar activitat</a>
+          <p style="color:#666;font-size:12px">Has rebut aquest missatge obligatori per informar-te sobre canvis importants al teu Compte de Google.</p>
+        </div>
+      </div>`,
+    fbOk:"<strong>Correcte.</strong> És legítim. Remitent oficial (<code>@accounts.google.com</code>), to informatiu sense urgència, no demana cap credencial per email, i el botó porta al domini real de Google (<code>myaccount.google.com</code>). Google envia aquest avís cada cop que inicies sessió des d'un dispositiu nou.",
+    fbBad:"<strong>Error.</strong> Aquest cas és legítim. És l'avís automàtic que Google envia quan detecta un nou inici de sessió. Senyals que ho confirmen: remitent <code>@accounts.google.com</code>, to informatiu, no demana contrasenyes i t'invita a verificar-ho al web oficial.",
+    recapTitle:"Legítim — avís de seguretat de Google"
+  },
+
+  {
+    channel:"SMS",
+    icon:"📱",
+    answer:"legitim",
+    mockup:`
+      <div class="mockup mk-sms">
+        <div class="mk-head">Apple</div>
+        <div class="mk-body">
+          <div class="time">Avui 11:08</div>
+          <div class="bubble">El teu codi d'Apple ID és: <strong>739 204</strong>. No el comparteixis amb ningú. @apple.com #739204 %apple.com</div>
+        </div>
+      </div>`,
+    fbOk:"<strong>Correcte.</strong> És legítim. És el codi de verificació de doble factor d'Apple. Característiques típiques: remitent \"Apple\" (no un número), codi numèric curt, avís explícit de no compartir-lo, i les etiquetes <code>@apple.com</code> / <code>%apple.com</code> que els iPhones usen per autocompletar el codi.",
+    fbBad:"<strong>Error.</strong> És legítim. És un codi 2FA d'Apple. El remitent \"Apple\" (no un número), l'avís de no compartir-lo i les etiquetes <code>@apple.com #codi %apple.com</code> (que iOS fa servir per autocompletar) són signes clars. Un SMS d'estafa demanaria fer clic a un enllaç, no et donaria un codi.",
+    recapTitle:"Legítim — codi 2FA d'Apple"
+  },
+
+  {
+    channel:"Facebook",
+    icon:"👥",
+    answer:"phishing",
+    mockup:`
+      <div class="mockup mk-fb">
+        <div class="mk-head">
+          <div class="avatar">Z</div>
+          <div>
+            <div class="name">Zara Promocions Oficials</div>
+            <div class="sub">Patrocinat · 🌐</div>
+          </div>
+        </div>
+        <div class="text">
+          🎁 Per celebrar el nostre 50è aniversari, regalem <strong>500 vals de 100 €</strong> als primers que comparteixin aquesta publicació i es registrin!
+          <br><br>
+          Només queden 50 vals disponibles. No ho deixis escapar! 👇
+        </div>
+        <div class="linkcard">
+          <div class="dom">bit.ly</div>
+          <div class="ttl">Reclama el teu val Zara de 100€ ara</div>
+          <div class="desc">Omple el formulari en menys de 2 minuts i rebràs el teu val al correu immediatament.</div>
+        </div>
+      </div>`,
+    fbOk:"<strong>Correcte.</strong> És phishing. Zara (com qualsevol marca gran) <strong>mai</strong> regala vals a canvi de compartir publicacions. L'URL escurçada <code>bit.ly</code> amaga la destinació real. El nom de la pàgina (\"Zara Promocions Oficials\") imita l'oficial però no és la verificada.",
+    fbBad:"<strong>Error.</strong> És phishing. Les campanyes virals del tipus \"regalem X per aniversari si comparteixes\" són sempre falses. Les marques verificades mai demanen compartir contingut per rebre premis, i mai utilitzen URLs escurçades.",
+    recapTitle:"Phishing Facebook — val Zara fals"
+  },
+
+  {
+    channel:"Newsletter",
+    icon:"📧",
+    answer:"legitim",
+    mockup:`
+      <div class="mockup mk-nl">
+        <div class="mk-email">
+          <div class="mk-head">
+            <div class="mk-row"><strong>De:</strong> Amazon.es &lt;store-news@amazon.es&gt;</div>
+            <div class="mk-row"><strong>Per a:</strong> jheremy.jsm@gmail.com</div>
+            <div class="mk-subject">Black Friday: fins al 70% de descompte</div>
+          </div>
+        </div>
+        <div class="brand-bar brand-amazon">amazon.es</div>
+        <div class="banner">
+          <h2>BLACK FRIDAY</h2>
+          <p>Fins a un 70% de descompte en milers de productes</p>
+        </div>
+        <div class="mk-body" style="padding:18px;font-size:14px">
+          <p>Descobreix les millors ofertes de l'any seleccionades per a tu.</p>
+          <p style="margin:12px 0"><strong>Categories destacades:</strong> Electrònica, Llar, Moda, Llibres.</p>
+          <a href="#" class="mk-btn amz" onclick="return false">Veure ofertes</a>
+          <p style="color:#666;font-size:11px;margin-top:16px">Has rebut aquest correu perquè estàs subscrit a les novetats d'Amazon.es. <u>Donar-se de baixa</u></p>
+        </div>
+      </div>`,
+    fbOk:"<strong>Correcte.</strong> És legítim. Remitent oficial (<code>@amazon.es</code>), promoció típica (Black Friday), enllaç d'ofertes genèric sense demanar dades, i inclou l'opció \"Donar-se de baixa\" al peu (obligatòria per llei a les newsletters). No demana credencials ni dades personals.",
+    fbBad:"<strong>Error.</strong> És legítim. És una newsletter comercial normal d'Amazon. Senyals: domini real <code>@amazon.es</code>, promoció sense urgència artificial, cap petició de dades, botó \"Donar-se de baixa\" al peu (legalment obligatori a les newsletters UE).",
+    recapTitle:"Legítim — newsletter Amazon Black Friday"
+  },
+
+  {
+    channel:"Email",
+    icon:"✉️",
+    answer:"legitim",
+    mockup:`
+      <div class="mockup mk-email">
+        <div class="mk-head">
+          <div class="mk-row"><strong>De:</strong> Booking.com &lt;confirmation@booking.com&gt;</div>
+          <div class="mk-row"><strong>Per a:</strong> jheremy.jsm@gmail.com</div>
+          <div class="mk-subject">Confirmació de reserva · Hotel Catalonia Barcelona Plaza</div>
+        </div>
+        <div class="mk-body">
+          <p>Hola Jheremy,</p>
+          <p>La teva reserva està confirmada. ✅</p>
+          <p><strong>Hotel Catalonia Barcelona Plaza</strong><br>
+          Plaça d'Espanya 6-8, Barcelona<br>
+          <strong>Entrada:</strong> dv. 12 des. 2026 (15:00)<br>
+          <strong>Sortida:</strong> dg. 14 des. 2026 (11:00)<br>
+          <strong>Núm. confirmació:</strong> 5.728.419.302</p>
+          <p>Pots consultar o modificar la reserva al teu compte.</p>
+          <a href="#" class="mk-btn booking" onclick="return false">Veure la meva reserva</a>
+          <p style="color:#666;font-size:12px">Booking.com B.V. · Herengracht 597, 1017 CE Amsterdam</p>
+        </div>
+      </div>`,
+    fbOk:"<strong>Correcte.</strong> És legítim. Remitent oficial (<code>@booking.com</code>), dades concretes i verificables (número de reserva, hotel real, dates específiques), to informatiu sense urgència, i no demana cap pagament ni credencials — només informa de la reserva confirmada.",
+    fbBad:"<strong>Error.</strong> És legítim. Si tens la reserva feta, aquest és l'email normal de confirmació. Senyals: domini oficial <code>@booking.com</code>, informació específica que podries verificar al teu compte, cap petició de dades ni pressió temporal.",
+    recapTitle:"Legítim — confirmació reserva Booking.com"
+  }
+];
+
+/* ===========================================================
+   LÒGICA
+   =========================================================== */
+let current = 0;
+let answers = [];
+
+function start(){
+  current = 0;
+  answers = [];
+  show("quiz");
+  renderQuestion();
+}
+
+function show(id){
+  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function renderQuestion(){
+  const q = QUESTIONS[current];
+  const pct = ((current)/QUESTIONS.length)*100;
+  document.getElementById("progFill").style.width = pct + "%";
+  document.getElementById("progLabel").textContent = `Pregunta ${current+1} de ${QUESTIONS.length}`;
+
+  const html = `
+    <div class="q-channel">${q.icon} ${q.channel}</div>
+    <h2 class="q-title">Què veus a continuació? Analitza'l amb cura.</h2>
+    ${q.mockup}
+    <div class="q-title" style="font-size:17px;margin-top:8px">És phishing o és una comunicació legítima?</div>
+    <div class="choices">
+      <button class="choice" id="btn-phi" onclick="answer('phishing')"><span class="dot" style="background:var(--bad)"></span>Phishing</button>
+      <button class="choice" id="btn-leg" onclick="answer('legitim')"><span class="dot" style="background:var(--ok)"></span>Legítim</button>
+    </div>
+    <div class="feedback" id="fb">
+      <div class="fb-label" id="fbLabel"></div>
+      <div class="fb-text" id="fbText"></div>
+    </div>
+    <div class="next-row" id="nextRow">
+      <button class="btn btn-primary" onclick="next()">${current===QUESTIONS.length-1?"Veure resultat":"Següent pregunta"} →</button>
+    </div>
+  `;
+  document.getElementById("qContent").innerHTML = html;
+}
+
+function answer(choice){
+  const q = QUESTIONS[current];
+  const correct = choice === q.answer;
+  answers.push({q:current, choice, correct});
+
+  const btnPhi = document.getElementById("btn-phi");
+  const btnLeg = document.getElementById("btn-leg");
+  btnPhi.disabled = true;
+  btnLeg.disabled = true;
+
+  // Marcar correcta/incorrecta
+  if(q.answer === "phishing"){
+    btnPhi.classList.add("correct");
+    if(choice === "legitim") btnLeg.classList.add("wrong");
+  } else {
+    btnLeg.classList.add("correct");
+    if(choice === "phishing") btnPhi.classList.add("wrong");
+  }
+
+  // Feedback
+  const fb = document.getElementById("fb");
+  const fbLabel = document.getElementById("fbLabel");
+  const fbText = document.getElementById("fbText");
+  if(correct){
+    fb.classList.add("show","ok");
+    fbLabel.textContent = "Correcte ✓";
+    fbText.innerHTML = q.fbOk;
+  } else {
+    fb.classList.add("show","bad");
+    fbLabel.textContent = "Incorrecte ✗";
+    fbText.innerHTML = q.fbBad;
+  }
+
+  document.getElementById("nextRow").classList.add("show");
+}
+
+function next(){
+  current++;
+  if(current >= QUESTIONS.length){
+    showResult();
+  } else {
+    renderQuestion();
+  }
+}
+
+function showResult(){
+  const score = answers.filter(a=>a.correct).length;
+  const pct = (score/QUESTIONS.length)*100;
+
+  const ring = document.getElementById("scoreRing");
+  ring.style.setProperty("--pct", pct);
+  document.getElementById("scoreNum").textContent = score;
+
+  let title, msg;
+  if(score === 10){
+    title = "Perfecte! 🎯";
+    msg = "Tens un ull expert per detectar phishing. Podries formar altres persones.";
+  } else if(score >= 8){
+    title = "Molt bé!";
+    msg = "Detectes la majoria d'atacs. Repassa els casos que has fallat per afinar encara més.";
+  } else if(score >= 6){
+    title = "Aprovat";
+    msg = "Tens una base sòlida però encara hi ha casos que et confonen. Revisa el feedback.";
+  } else if(score >= 4){
+    title = "Pots millorar";
+    msg = "Falles en massa casos. Repassa els senyals d'alerta: domini del remitent, urgència artificial i URLs sospitoses.";
+  } else {
+    title = "Alerta";
+    msg = "Et recomanem repetir el test després de revisar atentament el feedback de cada cas.";
+  }
+
+  document.getElementById("scoreTitle").textContent = title;
+  document.getElementById("scoreMsg").textContent = msg;
+
+  // Recap
+  const recap = answers.map((a,i)=>{
+    const q = QUESTIONS[i];
+    return `
+      <div class="recap-item">
+        <div class="recap-icon ${a.correct?'ok':'bad'}">${a.correct?'✓':'✗'}</div>
+        <div class="recap-text">
+          <div class="t">${i+1}. ${q.recapTitle}</div>
+          <div class="s">${q.channel} · Resposta correcta: <strong>${q.answer==='phishing'?'Phishing':'Legítim'}</strong></div>
+        </div>
+      </div>
+    `;
+  }).join("");
+  document.getElementById("recapList").innerHTML = recap;
+
+  show("result");
+}
+
+function restart(){
+  show("intro");
+}
+</script>
+</body>
+</html>
